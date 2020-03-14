@@ -1,0 +1,259 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SJF
+{
+    class Data
+    {
+        public Data(String n, List<int> d)
+        {   name = n;
+            info = d;
+        }
+       public List<int> info;
+        public int res = 0;
+        public static List<Data> datainio;
+        public static List<Data> ready;
+        public static int totaltime = 0;
+        public static int completeProcesses = 0;
+        public static int round = 0;
+        public static float totalallcpu = 0;
+        public static float cpuidle = 0;
+        public int Totalio = 0;
+        public int io = 0;
+        public int ioc = 0;
+        public int timeenteringqueue = 0;
+        public bool firstrun = true;
+        public int w = 0;
+        public int tr = 0;
+        public int CPU = 0;
+        public String name;
+
+        class Program
+        {
+
+            static void Main(string[] args)
+            {   //setting up all information into a list to be put into a queue
+                Data p1 = new Data("P1", new List<int> { 5, 27, 3, 31, 5, 43, 4, 18, 6, 22, 4, 26, 3, 24, 4 });
+                Data p2 = new Data("P2", new List<int> { 4, 48, 5, 44, 7, 42, 12, 37, 9, 76, 4, 41, 9, 31, 7, 43, 8 });
+                Data p3 = new Data("P3", new List<int> { 8, 33, 12, 41, 18, 65, 14, 21, 4, 61, 15, 18, 14, 26, 5, 31, 6 });
+                Data p4 = new Data("P4", new List<int> { 3, 35, 4, 41, 5, 45, 3, 51, 4, 61, 5, 54, 6, 82, 5, 77, 3 });
+                Data p5 = new Data("P5", new List<int> { 16, 24, 17, 21, 5, 36, 16, 26, 7, 31, 13, 28, 11, 21, 6, 13, 3, 11, 4 });
+                Data p6 = new Data("P6", new List<int> { 11, 22, 4, 8, 5, 10, 6, 12, 7, 14, 9, 18, 12, 24, 15, 30, 8 });
+                Data p7 = new Data("P7", new List<int> { 14, 46, 17, 41, 11, 42, 15, 21, 4, 32, 7, 19, 16, 33, 10 });
+                Data p8 = new Data("P8", new List<int> { 4, 14, 5, 33, 6, 51, 14, 73, 16, 87, 6 });
+                int i = 1;
+                bool shortest;
+                ready = new List<Data>();
+                ready.Add(p1);
+                ready.Add(p2);
+                ready.Add(p3);
+                ready.Add(p4);
+                ready.Add(p5);
+                ready.Add(p6);
+                ready.Add(p7);
+                ready.Add(p8);
+                datainio = new List<Data>();
+                
+                while (completeProcesses != 8)
+                {   //Finding the process with the shortest CPU Burst
+                    if (ready.Count != 0)
+                {
+                i = 1;
+                shortest = false;
+                Data smallestp = ready.ElementAt(0);
+                while (!shortest)
+                {//Determines that the shortest process is already in the ready queue
+                if (ready.Count == 1)
+                {
+                shortest = true;
+                smallestp = ready.ElementAt(0);
+                ready.RemoveAt(0);
+
+                }//Sorts the queue, if the new process is shorter than the new process will be put in place, these else if statements determine whether the smallest process should be moved or stay where it is in the queue
+                else if (i != ready.Count - 1 && smallestp.info.First() > ready.ElementAt(i).info.First())
+                {
+                shortest = false;
+                smallestp = ready.ElementAt(i);
+
+                }
+                else if (i == ready.Count - 1 && smallestp.info.First() < ready.ElementAt(i).info.First())
+                {
+                shortest = true;
+                }
+                else if (i != ready.Count - 1 && smallestp.info.First() == ready.ElementAt(i).info.First())
+                {
+                if (smallestp.timeenteringqueue > ready.ElementAt(i).timeenteringqueue)
+                {
+                shortest = false;
+                smallestp = ready.ElementAt(i);
+                }
+                }
+                else if (i == ready.Count - 1 && smallestp.info.First() > ready.ElementAt(i).info.First())
+                {
+                shortest = true;
+                smallestp = ready.ElementAt(i);
+                }
+                else if (i == ready.Count - 1 && smallestp.info.First() == ready.ElementAt(i).info.First())
+                {
+                if (smallestp.timeenteringqueue > ready.ElementAt(i).timeenteringqueue)
+                {
+                shortest = true;
+                smallestp = ready.ElementAt(i);
+
+                }
+                else
+                {
+                shortest = true;
+                }
+                }
+                i++;
+                }
+                if (smallestp.firstrun == true)
+                {
+                smallestp.res = smallestp.w;
+                smallestp.firstrun = false;
+                }
+
+                ready.Remove(smallestp);
+                executeprocess(smallestp);
+                }
+                else if (datainio.Count != 0)//determining I/O burst counter
+                {
+                int n = 0;
+                while (datainio.ElementAt(n).ioc < datainio.ElementAt(n).io)
+                {
+                cpuidle++;
+                totaltime++;
+                datainio.ElementAt(n).ioc++;
+                if (n == datainio.Count - 1)
+                {
+                n = 0;
+                }
+                else
+                {
+                n++;
+                }
+
+                }
+                if (datainio.ElementAt(n).info.Count == 0)
+                {
+                 datainio.ElementAt(n).tr = datainio.ElementAt(n).CPU + datainio.ElementAt(n).Totalio + datainio.ElementAt(n).w;
+                 completeProcesses++;
+                 datainio.RemoveAt(n);
+
+                }
+                else
+                {
+                ready.Add(datainio.ElementAt(n));
+                datainio.RemoveAt(n);
+                }
+                }
+                }
+                //Printing the information
+                printresults(p1, p2, p3, p4, p5, p6, p7, p8);
+            }
+            public static void printexecution(Data d) //What is printed to the user
+            {
+                Console.WriteLine("Execution Time:  " + totaltime + "  For " + d.name);
+                Console.WriteLine("Inside Ready Queue\n");
+                for (int j = 0; j < ready.Count; j++)
+                {
+                Console.WriteLine(ready.ElementAt(j).name + " CPU Burst: " + ready.ElementAt(j).info.First() + "\n");
+                }
+                int timeremaining = 0;
+                Console.WriteLine("in I/O\n");
+                for (int y = 0; y < datainio.Count; y++)
+                {timeremaining = datainio.ElementAt(y).io - datainio.ElementAt(y).ioc;
+                Console.WriteLine(datainio.ElementAt(y).name + " Time left in I/O " + timeremaining + "\n");
+                }
+
+            }
+            public static void printresults(Data p1, Data p2, Data p3, Data p4, Data p5, Data p6, Data p7, Data p8)
+            {
+            int totalw = p1.w + p2.w + p3.w + p4.w + p5.w + p6.w + p7.w + p8.w;
+            double wave = totalw / 8;
+            Console.WriteLine("\n\n\n\nResults:\n");
+            Console.WriteLine("\nwait Times\n");
+            Console.WriteLine(" p1= " + p1.w + " p2= " + p2.w + " p3= " + p3.w + " p4= " + p4.w + " p5= " + p5.w + " p6= " + p6.w + " p7= " + p7.w + " p8= " + p8.w);
+            Console.WriteLine("Avg wait Time= " + wave);
+            float totaltr = p1.tr + p2.tr + p3.tr + p4.tr + p5.tr + p6.tr + p7.tr + p8.tr;
+            float turnaroundave = totaltr / 8;
+            Console.WriteLine("\nTurnaround Times\n");
+            Console.WriteLine("p1= " + p1.tr + " p2= " + p2.tr + " p3= " + p3.tr + " p4= " + p4.tr + " p5= " + p5.tr + " p6= " + p6.tr + " p7= " + p7.tr + " p8= " + p8.tr);
+            Console.WriteLine("\nAverage Turnaround Time= " + turnaroundave);
+            float cpuutilization = totalallcpu / totaltime;
+            cpuutilization = cpuutilization * 100;
+            Console.WriteLine("\nCPU Utilization= " + cpuutilization + "%");
+            Console.WriteLine("\nResponse Times\n");
+            Console.WriteLine("p1= " + p1.res + " p2= " + p2.res + " p3= " + p3.res + " p4= " + p4.res + " p5= " + p5.res + " p6= " + p6.res + " p7= " + p7.res + " p8= " + p8.res);
+            float totalres = p1.res + p2.res + p3.res + p4.res + p5.res + p6.res + p7.res + p8.res;
+            float responseave = totalres / 8;
+            Console.WriteLine("\nAverage Response Time= " + responseave);
+            Console.WriteLine("Total Time= " + totaltime);
+
+            }
+            public static void executeprocess(Data d)
+            {
+                int cpuburst = d.info.First();
+                d.CPU = d.CPU + cpuburst;
+                d.info.RemoveAt(0);
+                printexecution(d);
+                //loop for cpu burst, until it is completed
+                for (int j = 0; j < cpuburst; j++)
+                {
+                    totalallcpu++;
+                    totaltime++;
+
+                    for (int i = 0; i < datainio.Count; i++)
+                    {
+                        datainio.ElementAt(i).ioc++;
+                        //This checks if process has completed
+                        if (datainio.ElementAt(i).ioc == datainio.ElementAt(i).io)
+                        {
+                            if (datainio.ElementAt(i).info.Count == 0)
+                            {
+                                d.tr = d.CPU + d.Totalio + d.w;
+                                completeProcesses++;
+                                datainio.RemoveAt(i);
+                                Console.WriteLine("\n DONE = YES");
+                            }
+                            else//Add to ready and then remove
+                            {
+
+                                datainio.ElementAt(i).io = 0;
+                                datainio.ElementAt(i).ioc = 0;
+                                datainio.ElementAt(i).timeenteringqueue = totaltime;
+                                ready.Add(datainio.ElementAt(i));
+                                datainio.RemoveAt(i);
+                            }
+                        }
+                    }
+                    for (int i = 0; i < ready.Count; i++)
+                    {
+                        ready.ElementAt(i).w++;
+                    }
+
+                }
+                if (d.info.Count != 0)//Checks to see if the process has not completed and if so puts it in I/O 
+                {
+                    d.io = d.info[0];
+                    d.Totalio = d.Totalio + d.io;
+                    d.info.RemoveAt(0);
+                    datainio.Add(d);
+                    Console.WriteLine("\nComplete? = NO");
+                    Console.WriteLine("\n---------------------------------------------------\n\n\n");
+                }
+                else//Checks to see if the process has completed 
+                {
+                    d.tr = d.CPU + d.Totalio + d.w;
+                    completeProcesses++;
+                    Console.WriteLine("\nComplete? = YES");
+                    Console.WriteLine("\n---------------------------------------------------\n\n\n");
+                }
+            }
+        }
+    }
+}
